@@ -1,2 +1,6 @@
-# Apartment-Energy-Tracker
-- Implemented user input for multiple apartments and their flats - Captures and stores KW (energy consumption) data for each flat - Added formatted output to display all recorded values - Improved code readability, structure, and variable naming
+- Developed a C program to help electrical engineers calculate total power load 
+  for each apartment and across three general phases.
+- Allows input of apartments, flats, and individual flat power usage in KW.
+- Displays total KW per apartment and total building power demand.
+- Designed for real-world field calculations and cable sizing decisions.
+

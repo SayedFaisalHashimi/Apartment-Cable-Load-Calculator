@@ -2,15 +2,18 @@
 
 int main(void) {
     int aptCount = 0;
-    int flatCount[20];
-    float kw[20][20];
-    float cosphi[20];
+    int flatCount[1000];
+    float kw[1000][100];
+    float cosphi[1000];
     int i, j;
 
 
     // Input number of apartments
     printf("Enter number of apartments: ");
-    scanf("%d", &aptCount);
+    if(scanf("%d", &aptCount)!= 1 || aptCount <= 0 || aptCount > 1000) {
+        printf("Invalid number of apartments (1-1000).\n");
+        return 1;
+    };
 
 
     /* Machines (optional, building-level extra loads) */
@@ -22,7 +25,10 @@ int main(void) {
     // Input number of flats per apartment
     for (i = 0; i < aptCount; i++) {
         printf("Enter number of flats for apartment %d: ", i + 1);
-        scanf("%d", &flatCount[i]);
+        if(scanf("%d", &flatCount[i])!= 1 || flatCount[i] < 0 || flatCount[i] > 100) {
+            printf("Invalid flats number for apartment %d (0-1000).\n", i + 1);
+            return 1;
+        }
     }
 
     // Input KW usage for each flat
@@ -30,7 +36,10 @@ int main(void) {
         printf("\nApartment %d:\n", i + 1);
         for (j = 0; j < flatCount[i]; j++) {
             printf("Enter KW for apartment %d, flat %d: ", i + 1, j + 1);
-            scanf("%f", &kw[i][j]);
+            if(scanf("%f", &kw[i][j]) != 1 || kw[i][j] < 0.0f) {
+                printf("Invalid KW value. Must be non-negative.\n");
+                return 1;
+            }
         }
     }
 
@@ -38,7 +47,10 @@ int main(void) {
     printf("\n--- Power Factor Input ---\n");
     for (i = 0; i < aptCount; i++) {
         printf("Enter cos φ for apartment %d: ", i + 1);
-        scanf("%f", &cosphi[i]);
+        if(scanf("%f", &cosphi[i])!= 1 || cosphi[i] <= 0.0f || cosphi[i] > 1.0f) {
+            printf("Invalid cos φ for apartment %d. Using default 1.0.\n", i + 1);
+            cosphi[i] = 1.0f;
+        }
     }
 
 

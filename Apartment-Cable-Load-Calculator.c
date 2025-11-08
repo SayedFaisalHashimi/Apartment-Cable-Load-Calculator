@@ -3,7 +3,8 @@
 int main(void) {
     int aptCount = 0;
     int flatCount[20];
-    int kw[20][20];
+    float kw[20][20];
+    float cosphi[20];
     int i, j;
 
     // Input number of apartments
@@ -21,10 +22,16 @@ int main(void) {
         printf("\nApartment %d:\n", i + 1);
         for (j = 0; j < flatCount[i]; j++) {
             printf("Enter KW for apartment %d, flat %d: ", i + 1, j + 1);
-            scanf("%d", &kw[i][j]);
+            scanf("%f", &kw[i][j]);
         }
     }
 
+    // Input: power factor (cos φ) per apartment
+    printf("\n--- Power Factor Input ---\n");
+    for (i = 0; i < aptCount; i++) {
+        printf("Enter cos φ for apartment %d: ", i + 1);
+        scanf("%f", &cosphi[i]);
+    }
 
     return 0;
 }

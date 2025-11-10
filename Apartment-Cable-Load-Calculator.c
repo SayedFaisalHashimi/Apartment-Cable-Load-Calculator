@@ -1,16 +1,21 @@
 #include <stdio.h>
 
+#define MAX_APT 1000
+#define MAX_FLAT 100
+#define MAX_MACH 50
+
+
 int main(void) {
-    int aptCount = 0;
-    int flatCount[1000];
-    float kw[1000][100];
-    float cosphi[1000];
-    int i, j;
+    int   aptCount = 0;
+    int   flatCount[MAX_APT] = {0};
+    float kw[MAX_APT][MAX_FLAT] = {{0}};
+    float cosphi[MAX_APT] = {0};
+    int   i, j;
 
 
     // Input number of apartments
     printf("Enter number of apartments: ");
-    if(scanf("%d", &aptCount)!= 1 || aptCount <= 0 || aptCount > 1000) {
+    if(scanf("%d", &aptCount)!= 1 || aptCount <= 0 || aptCount > MAX_APT ) {
         printf("Invalid number of apartments (1-1000).\n");
         return 1;
     };
@@ -19,7 +24,7 @@ int main(void) {
     /* Machines (optional, building-level extra loads) */
     char isMachine = 'n';
     int machineCount = 0;
-    float machineKW[50] = {0.0f};
+    float machineKW[MAX_MACH] = {0.0f};
 
 
     // Input number of flats per apartment
@@ -61,7 +66,7 @@ int main(void) {
 
     if (isMachine == 'y' || isMachine == 'Y') {
         printf("Enter number of extra machines: ");
-        if (scanf("%d", &machineCount) != 1 || machineCount < 0 || machineCount > 50) {
+        if (scanf("%d", &machineCount) != 1 || machineCount < 0 || machineCount > MAX_MACH) {
             printf("Invalid machine count (0-50).\n");
             return 1;
         }

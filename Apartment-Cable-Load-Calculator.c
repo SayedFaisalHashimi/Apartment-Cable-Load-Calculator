@@ -7,8 +7,8 @@
 
 
 /* Function prototypes */
-void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[], int *machineCount, float machineKW[]);
-
+void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
+void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
 
 
 int main(void) {
@@ -18,10 +18,15 @@ int main(void) {
     float cosphi[MAX_APT] = {0};
     int machineCount = 0;
     float machineKW[MAX_MACH] = {0.0f};
+    int aptWithMachineCount = 0;
+    int aptMachineIndex[MAX_MACH] = {0};
 
 
      /* --- Input --- */
-    input_data(&aptCount, flatCount, kw, cosphi, &machineCount, machineKW);
+    input_data(&aptCount, flatCount, kw, cosphi);
+
+     /* --- Extra machines input --- */
+    input_extra_machines(aptCount, &machineCount, machineKW, &aptWithMachineCount, aptMachineIndex);
 
 
     return 0;
@@ -34,7 +39,7 @@ int main(void) {
 
 /* --- IMPLEMENTATIONS --- */
 
-void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[],int *machineCount, float machineKW[]){ 
+void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]){ 
     // Input number of apartments
     int apt;
     printf("Enter number of apartments: ");
@@ -79,30 +84,46 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
             cosphi[i] = 1.0f;
         }
     }
+}
 
 
-    /* --- Optional extra machines (building-level) --- */
-    char isMachine = 'n';
-    printf("\nIs there any extra machine? (y for yes / n for no): ");
-    /* Leading space in format to skip previous newline */
-    scanf(" %c", &isMachine);
-
-    if (isMachine == 'y' || isMachine == 'Y') {
-        printf("Enter number of extra machines: ");
-        if (scanf("%d", machineCount) != 1 || *machineCount < 0 || *machineCount > MAX_MACH) {
-            printf("Invalid machine count (0-50).\n");
-            return ;
-        }
-        for (int i = 0; i < *machineCount; i++) {
-            printf("  Enter load (KW) for machine %d: ", i + 1);
-            if (scanf("%f", &machineKW[i]) != 1 || machineKW[i] < 0.0f) {
-                printf("Invalid KW value for machine %d.\n", i + 1);
-                exit(1);
-            }
-        }
+void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]) {
+    printf("\nEnter number of apartments that have extra machines (like Elevator): ");
+    if(scanf("%d", aptWithMachineCount) != 1 || *aptWithMachineCount < 0 || *aptWithMachineCount > aptCount) {
+        printf("Invalid number of apartments with machines.\n");
+        exit(1);
     }
-    else {
+
+    if(*aptWithMachineCount == 0) {
         *machineCount = 0;
+        return;
     }
+
+    printf("Enter the apartment numbers that have machines: ");
+    for(int i = 0; i < *aptWithMachineCount; i++) {
+        if(scanf("%d", &aptMachineIndex[i]) != 1 || aptMachineIndex[i] <= 0 || aptMachineIndex[i] > aptCount) {
+            printf("Invalid apartment number.\n");
+            exit(1);
+        }
+    }
+
+    for(int i = 0; i < *aptWithMachineCount; i++) {
+        int aptNum = aptMachineIndex[i];
+        printf("Enter Kw for machine in apartment %d: ", aptNum);
+        if(scanf("%f", &machineKW[i]) != 1 || machineKW[i] < 0.0f) {
+            printf("Invalid KW for machine in apartment %d.\n", aptNum);
+            exit(1);
+        }
+
+        float cosphiMachine;
+        printf("Enter cos phi for machine inside ap %d: ", aptNum);
+        if(scanf("%f", &cosphiMachine) != 1 || cosphiMachine <= 0.0f || cosphiMachine > 1.0f) {
+            printf("Invalid cos phi for machine in apartment %d. Using default 1.0.\n", aptNum);
+            cosphiMachine = 1.0f;
+        }
+        // Optional: store cosphiMachine if needed later
+    }
+
+    *machineCount = *aptWithMachineCount;
 }
 

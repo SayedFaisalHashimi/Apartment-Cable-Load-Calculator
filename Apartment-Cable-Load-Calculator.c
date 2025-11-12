@@ -9,6 +9,7 @@
 /* Function prototypes */
 void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
+void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
 
 
 int main(void) {
@@ -28,6 +29,8 @@ int main(void) {
      /* --- Extra machines input --- */
     input_extra_machines(aptCount, &machineCount, machineKW, &aptWithMachineCount, aptMachineIndex);
 
+    /* --- Calculate unit power --- */
+    calculate_unit_power(&aptCount, flatCount, kw);
 
     return 0;
 
@@ -127,3 +130,27 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
     *machineCount = *aptWithMachineCount;
 }
 
+
+
+
+void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
+{
+    float unitPower = 0;
+    for(int i = 0; i < *aptCount; i++){
+        for(int j = 0; j < flatCount[i]; j++)
+        {
+            if(kw[i][j] >= 8)
+            {
+                unitPower = 0.6 * 8 + (kw[i][j] - 8) * 0.4;
+            }
+            else
+            {
+                unitPower = kw[i][j] * 0.6;
+            }
+
+            printf("Calculated power for apartment %d, unit %d = %.2f kW\n", i + 1, j + 1, unitPower);
+        }
+    }
+
+    exit(1);
+}

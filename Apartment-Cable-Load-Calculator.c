@@ -185,7 +185,7 @@ void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
                 unitPower = kw[i][j] * 0.6;
             }
 
-            printf("Calculated power for apartment %d, unit %d = %.2f kW\n", i + 1, j + 1, unitPower);
+            printf("\n\nCalculated power for apartment %d, unit %d = %.2f kW", i + 1, j + 1, unitPower);
         }
     }
 

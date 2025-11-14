@@ -5,31 +5,44 @@
 #define MAX_FLAT 100
 #define MAX_MACH 50
 
-
-/* Function prototypes */
+/*
+* ------------------------------------------------------------
+* Function Prototypes
+* ------------------------------------------------------------
+* These tell the compiler what functions exist below so that
+* main() can call them even though the full definitions
+* appear later in the code.
+*/
 void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
 
 
 int main(void) {
-    int   aptCount = 0;
-    int   flatCount[MAX_APT] = {0};
-    float kw[MAX_APT][MAX_FLAT] = {{0}};
-    float cosphi[MAX_APT] = {0};
-    int machineCount = 0;
-    float machineKW[MAX_MACH] = {0.0f};
-    int aptWithMachineCount = 0;
-    int aptMachineIndex[MAX_MACH] = {0};
+    /*
+* ------------------------------------------------------------
+* MAIN VARIABLES
+* ------------------------------------------------------------
+* These variables store all data entered by the user, such as
+* apartment count, number of flats, KW values, and machine data.
+*/
+    int   aptCount = 0;                         // Total number of apartments
+    int   flatCount[MAX_APT] = {0};             // Number of flats inside each apartment
+    float kw[MAX_APT][MAX_FLAT] = {{0}};        // KW usage for each flat  
+    float cosphi[MAX_APT] = {0};                // Power factor per apartment
+    
+    int machineCount = 0;                       // Number of machines in total
+    float machineKW[MAX_MACH] = {0.0f};         // KW values for machines
+    int aptWithMachineCount = 0;                // How many apartments have at least one machine
+    int aptMachineIndex[MAX_MACH] = {0};        // The apartment indexes that contain machines
 
-
-     /* --- Input --- */
+     /* --- Step 1: General user input for apartments and flats --- */
     input_data(&aptCount, flatCount, kw, cosphi);
 
-     /* --- Extra machines input --- */
+     /* --- Step 2: Input additional machines (e.g., elevators) --- */
     input_extra_machines(aptCount, &machineCount, machineKW, &aptWithMachineCount, aptMachineIndex);
 
-    /* --- Calculate unit power --- */
+    /* --- Step 3: Compute the unit power for each flat based on KW usage --- */
     calculate_unit_power(&aptCount, flatCount, kw);
 
     return 0;
@@ -37,13 +50,19 @@ int main(void) {
 }
 
 
-
-
-
-/* --- IMPLEMENTATIONS --- */
-
+/*
+* ------------------------------------------------------------
+* Function: input_data
+* ------------------------------------------------------------
+* Responsible for collecting:
+* - Number of apartments
+* - Number of flats in each apartment
+* - KW consumption of each flat
+* - cos phi (power factor) per apartment
+* The function also includes error-checking to prevent invalid input.
+*/
 void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]){ 
-    // Input number of apartments
+
     int apt;
     printf("Enter number of apartments: ");
     if(scanf("%d", &apt)!= 1 || apt <= 0 || apt > MAX_APT ) {
@@ -54,9 +73,6 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
      *aptCount = apt;
 
     
-    
-
-
     // Input number of flats per apartment
     for (int i = 0; i < *aptCount; i++) {
         printf("Enter number of flats for apartment %d: ", i + 1);
@@ -90,13 +106,25 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
 }
 
 
+/*
+* ------------------------------------------------------------
+* Function: input_extra_machines
+* ------------------------------------------------------------
+* Handles additional loads such as elevators or water pumps.
+* This function collects:
+* - How many apartments contain machines
+* - Which apartments they are
+* - KW and cos phi values of each machine
+*/
 void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]) {
+
     printf("\nEnter number of apartments that have extra machines (like Elevator): ");
     if(scanf("%d", aptWithMachineCount) != 1 || *aptWithMachineCount < 0 || *aptWithMachineCount > aptCount) {
         printf("Invalid number of apartments with machines.\n");
         exit(1);
     }
 
+    /* If there are no machine-equipped apartments, nothing more to do */
     if(*aptWithMachineCount == 0) {
         *machineCount = 0;
         return;
@@ -110,6 +138,7 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
         }
     }
 
+    /* Input KW and cos phi values for each machine */
     for(int i = 0; i < *aptWithMachineCount; i++) {
         int aptNum = aptMachineIndex[i];
         printf("Enter Kw for machine in apartment %d: ", aptNum);
@@ -131,8 +160,16 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
 }
 
 
-
-
+/*
+* ------------------------------------------------------------
+* Function: calculate_unit_power
+* ------------------------------------------------------------
+* This function calculates the "unit power" of each flat based
+* on its KW usage using a simple diversity rule:
+* - For the first 8 kW → multiply by 0.6
+* - Anything above 8 kW → multiply by 0.4
+* Then the function prints all calculated values.
+*/
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
 {
     float unitPower = 0;

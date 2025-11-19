@@ -88,7 +88,7 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
     
     // Input number of flats per apartment
     for (int i = 0; i < *aptCount; i++) {
-        printf("Enter number of flats for apartment %d: ", i + 1);
+        printf("Enter number of units for apartment %d: ", i + 1);
         if(scanf("%d", &flatCount[i])!= 1 || flatCount[i] < 0 || flatCount[i] > 100) {
             printf("Invalid flats number for apartment %d (0-1000).\n", i + 1);
             exit(1);
@@ -99,7 +99,7 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
     for (int i = 0; i < *aptCount; i++) {
         printf("\nApartment %d:\n", i + 1);
         for (int j = 0; j < flatCount[i]; j++) {
-            printf("Enter KW for apartment %d, flat %d: ", i + 1, j + 1);
+            printf("Enter KW for apartment %d, unit %d: ", i + 1, j + 1);
             if(scanf("%f", &kw[i][j]) != 1 || kw[i][j] < 0.0f) {
                 printf("Invalid KW value. Must be non-negative.\n");
                 exit(1);
@@ -185,12 +185,14 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
 */
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
 {
+    printf("\n===== Unit KW Summary =====\n");
+    printf("\n");
     float unitPower = 0;
     for(int i = 0; i < *aptCount; i++){
         for(int j = 0; j < flatCount[i]; j++)
         {
             float unitPower = compute_unit_power(kw[i][j]);
-            printf("Apartment %d, Flat %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
+            printf("Apartment %d, unit %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
         }
     }
 

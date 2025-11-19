@@ -13,9 +13,11 @@
 * main() can call them even though the full definitions
 * appear later in the code.
 */
+float compute_unit_power(float kw);  // calculates diversified unit power
 void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
+float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]);
 
 
 int main(void) {
@@ -45,8 +47,19 @@ int main(void) {
     /* --- Step 3: Compute the unit power for each flat based on KW usage --- */
     calculate_unit_power(&aptCount, flatCount, kw);
 
+    // Step 4: Sum KW per apartment
+    sum_apartment_kw(aptCount, flatCount, kw);
+
     return 0;
 
+}
+
+
+// -------------------- FUNCTIONS --------------------
+
+// Compute unit power with diversity formula
+float compute_unit_power(float kw) {
+    return (kw >= 8) ? (0.6 * 8 + 0.4 * (kw - 8)) : (0.6 * kw);
 }
 
 
@@ -176,18 +189,24 @@ void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
     for(int i = 0; i < *aptCount; i++){
         for(int j = 0; j < flatCount[i]; j++)
         {
-            if(kw[i][j] >= 8)
-            {
-                unitPower = 0.6 * 8 + (kw[i][j] - 8) * 0.4;
-            }
-            else
-            {
-                unitPower = kw[i][j] * 0.6;
-            }
-
-            printf("\n\nCalculated power for apartment %d, unit %d = %.2f kW", i + 1, j + 1, unitPower);
+            float unitPower = compute_unit_power(kw[i][j]);
+            printf("Apartment %d, Flat %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
         }
     }
 
-    exit(1);
+}
+
+
+// Sum KW per apartment using compute_unit_power
+float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]) {
+    printf("\n===== Apartment KW Summary =====\n");
+    for(int i = 0; i < aptCount; i++) {
+        float totalKW = 0.0f;
+        for(int j = 0; j < flatCount[i]; j++) {
+            totalKW += compute_unit_power(kw[i][j]);
+        }
+        printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+    }
+    printf("===============================\n");
+    return 0.0f; // just to satisfy return type
 }

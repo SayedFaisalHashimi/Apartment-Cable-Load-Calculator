@@ -17,7 +17,7 @@ float compute_unit_power(float kw);  // calculates diversified unit power
 void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
-float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]);
+float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 
 
 int main(void) {
@@ -48,7 +48,7 @@ int main(void) {
     calculate_unit_power(&aptCount, flatCount, kw);
 
     // Step 4: Sum KW per apartment
-    sum_apartment_kw(aptCount, flatCount, kw);
+    sum_apartment_kw(aptCount, flatCount, kw, cosphi);
 
     return 0;
 
@@ -200,7 +200,7 @@ void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
 
 
 // Sum KW per apartment using compute_unit_power
-float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]) {
+float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]) {
     printf("\n===== Apartment KW Summary =====\n");
     for(int i = 0; i < aptCount; i++) {
         float totalKW = 0.0f;
@@ -210,84 +210,85 @@ float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]) {
         
         if (flatCount[i]>0 && flatCount[i] < 3)
           {
+            totalKW=totalKW/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=3 && flatCount[i] <= 5)
           {
-              totalKW*=0.45;
+              totalKW*=0.45/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=6 && flatCount[i] <= 10)
           {
-              totalKW*=0.43;
+              totalKW*=0.43/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=11 && flatCount[i] <= 15)
           {
-              totalKW*=0.41;
+              totalKW*=0.41/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=16 && flatCount[i] <= 20)
           {
-              totalKW*=0.39;
+              totalKW*=0.39/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=21 && flatCount[i] <= 25)
           {
-              totalKW*=0.36;
+              totalKW*=0.36/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=26 && flatCount[i] <= 30)
           {
-              totalKW*=0.34;
+              totalKW*=0.34/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=31 && flatCount[i] <= 35)
           {
-              totalKW*=0.31;
+              totalKW*=0.31/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=36 && flatCount[i]<= 40)
           {
-              totalKW*=0.29;
+              totalKW*=0.29/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=41 && flatCount[i] <= 45)
           {
-              totalKW*=0.28;
+              totalKW*=0.28/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=46 && flatCount[i] <= 50)
           {
-              totalKW*=0.26;
+              totalKW*=0.26/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=51 && flatCount[i] <= 55)
           {
-              totalKW*=0.25;
+              totalKW*=0.25/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=56 && flatCount[i] <= 61)
           {
-              totalKW*=0.24;
+              totalKW*=0.24/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           
           else if (flatCount[i]>=62)
           {
-              totalKW*=0.23;
+              totalKW*=0.23/cosphi[i];
               printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
           }
           else 

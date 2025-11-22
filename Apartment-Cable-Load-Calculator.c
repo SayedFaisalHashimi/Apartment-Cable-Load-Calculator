@@ -207,7 +207,94 @@ float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT]) {
         for(int j = 0; j < flatCount[i]; j++) {
             totalKW += compute_unit_power(kw[i][j]);
         }
-        printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+        
+        if (flatCount[i]>0 && flatCount[i] < 3)
+          {
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=3 && flatCount[i] <= 5)
+          {
+              totalKW*=0.45;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=6 && flatCount[i] <= 10)
+          {
+              totalKW*=0.43;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=11 && flatCount[i] <= 15)
+          {
+              totalKW*=0.41;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=16 && flatCount[i] <= 20)
+          {
+              totalKW*=0.39;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=21 && flatCount[i] <= 25)
+          {
+              totalKW*=0.36;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=26 && flatCount[i] <= 30)
+          {
+              totalKW*=0.34;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=31 && flatCount[i] <= 35)
+          {
+              totalKW*=0.31;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=36 && flatCount[i]<= 40)
+          {
+              totalKW*=0.29;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=41 && flatCount[i] <= 45)
+          {
+              totalKW*=0.28;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=46 && flatCount[i] <= 50)
+          {
+              totalKW*=0.26;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=51 && flatCount[i] <= 55)
+          {
+              totalKW*=0.25;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=56 && flatCount[i] <= 61)
+          {
+              totalKW*=0.24;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          
+          else if (flatCount[i]>=62)
+          {
+              totalKW*=0.23;
+              printf("Apartment %d → Total Diversified KW: %.2f kW\n", i+1, totalKW);
+          }
+          else 
+          {
+               printf(" Invalid number of Units. Exited,");
+          }
+       
     }
     printf("===============================\n");
     return 0.0f; // just to satisfy return type

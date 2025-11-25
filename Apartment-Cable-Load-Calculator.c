@@ -20,6 +20,7 @@ void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
 float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
 float get_diversity_factor(int units);
 float total_field_KW(float totalKW);
+float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor);
 
 
 int main(void) {
@@ -63,7 +64,7 @@ int main(void) {
 
 // Compute unit power with diversity formula
 float compute_unit_power(float kw) {
-    return (kw >= 8) ? (0.6 * 8 + 0.4 * (kw - 8)) : (0.6 * kw);
+    return (kw >= 8) ? (0.6f * 8.0f + 0.4f * (kw - 8.0f)) : (0.6f * kw);
 }
 
 
@@ -83,7 +84,7 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
     int apt;
     printf("Enter number of apartments: ");
     if(scanf("%d", &apt)!= 1 || apt <= 0 || apt > MAX_APT ) {
-        printf("Invalid number of apartments (1-1000).\n");
+        printf("Invalid number of apartments (1-%d).\n", MAX_APT);
         exit(1);
     }
 
@@ -93,8 +94,8 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
     // Input number of flats per apartment
     for (int i = 0; i < *aptCount; i++) {
         printf("Enter number of units for apartment %d: ", i + 1);
-        if(scanf("%d", &flatCount[i])!= 1 || flatCount[i] < 0 || flatCount[i] >  MAX_FLAT) {
-            printf("Invalid flats number for apartment %d (0-%d).\n", i + 1, MAX_FLAT);
+        if(scanf("%d", &flatCount[i])!= 1 || flatCount[i] <= 0 || flatCount[i] >  MAX_FLAT) {
+            printf("Invalid flats number for apartment %d (1-%d).\n", i + 1, MAX_FLAT);
             exit(1);
         }
     }
@@ -147,7 +148,7 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
         return;
     }
 
-    printf("Enter the apartment numbers that have machines: ");
+    printf("Enter the apartment numbers that have machines (space separated): ");
     for(int i = 0; i < *aptWithMachineCount; i++) {
         if(scanf("%d", &aptMachineIndex[i]) != 1 || aptMachineIndex[i] <= 0 || aptMachineIndex[i] > aptCount) {
             printf("Invalid apartment number.\n");
@@ -155,22 +156,43 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
         }
     }
 
-    /* Input KW and cos phi values for each machine */
+    /* Input KW and parameters values for each machine */
     for(int i = 0; i < *aptWithMachineCount; i++) {
-        int aptNum = aptMachineIndex[i];
+        int aptNum = aptMachineIndex[i];         /* aptNum is 1-based apartment number */
+
         printf("Enter Kw for machine in apartment %d: ", aptNum);
         if(scanf("%f", &machineKW[i]) != 1 || machineKW[i] < 0.0f) {
-            printf("Invalid KW for machine in apartment %d.\n", aptNum);
+            printf("Invalid KW for machine in apartment %d.\n", aptNum);    
             exit(1);
         }
 
-        float cosphiMachine;
+
+        float cosphiMachine = 1.0f;
         printf("Enter cos phi for machine inside ap %d: ", aptNum);
         if(scanf("%f", &cosphiMachine) != 1 || cosphiMachine <= 0.0f || cosphiMachine > 1.0f) {
             printf("Invalid cos phi for machine in apartment %d. Using default 1.0.\n", aptNum);
             cosphiMachine = 1.0f;
         }
         // Optional: store cosphiMachine if needed later
+
+
+        float SimultaneityFactor = 1.0f;
+        printf("Enter Simultaneity Factor for machine inside ap %d: ", aptNum);
+        if(scanf("%f", &SimultaneityFactor) != 1 || SimultaneityFactor <= 0.0f || SimultaneityFactor > 1.0f) {
+            printf("Invalid Simultaneity Factor for machine in apartment %d. Using default 1.0.\n", aptNum);
+            SimultaneityFactor = 1.0f;
+        }
+
+        float effiecencyFactor = 1.0f;
+        printf("Enter effiecency Factor for machine inside ap %d: ", aptNum);
+        if(scanf("%f", &effiecencyFactor) != 1 || effiecencyFactor <= 0.0f || effiecencyFactor > 1.0f) {
+            printf("Invalid effiecency Factor for machine in apartment %d. Using default 1.0.\n", aptNum);
+            effiecencyFactor = 1.0f;
+        }
+
+        float machinespower = calculate_machines_power(machineKW[i], SimultaneityFactor, cosphiMachine, effiecencyFactor);
+
+        printf("Apartment %d machine → Diversified Power: %.2f kW\n", aptNum, machinespower);
     }
 
     *machineCount = *aptWithMachineCount;
@@ -189,8 +211,8 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
 */
 void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
 {
-    printf("\n===== Unit KW Summary =====\n");
-    printf("\n");
+    printf("\n===== Unit KW Summary =====\n\n");
+
     for(int i = 0; i < *aptCount; i++){
         for(int j = 0; j < flatCount[i]; j++)
         {
@@ -234,7 +256,6 @@ float total_field_KW(float totalKW)
 // Sum KW per apartment using compute_unit_power
 float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]) {
     printf("\n===== Apartment KW Summary =====\n");
-    float totalX = 0.0f;
     float buildingTotal = 0.0f;
 
     for(int i = 0; i < aptCount; i++) {
@@ -261,10 +282,19 @@ float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], floa
         totalKW = (totalKW / cosphi[i]) * factor;
         printf("Apartment %d → Diversified Power: %.2f kW\n", i+1, totalKW);
 
-        totalX = total_field_KW(totalKW);    /* accumulate */
+        total_field_KW(totalKW);    /* accumulate (stored inside static) */
         buildingTotal += totalKW;
     }
 
     printf("===============================\n");
     return buildingTotal;
+}
+
+float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor) {
+    /* Guard against zero or invalid values */
+    if(cosphiMachine <= 0.0f) cosphiMachine = 1.0f;
+    if(SimultaneityFactor <= 0.0f) SimultaneityFactor = 1.0f;
+    if(effiecencyFactor <= 0.0f) effiecencyFactor = 1.0f;
+
+    return (machineKW / cosphiMachine) * SimultaneityFactor / effiecencyFactor;
 }

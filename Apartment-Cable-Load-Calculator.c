@@ -5,6 +5,7 @@
 #define MAX_FLAT 100
 #define MAX_MACH 50
 
+
 /*
 * ------------------------------------------------------------
 * Function Prototypes
@@ -14,44 +15,62 @@
 * appear later in the code.
 */
 float compute_unit_power(float kw);  // calculates diversified unit power
-void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
-void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]);
-void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT]);
-float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]);
+void input_data(struct Building *b);
+void input_extra_machines(struct Building *b);
+void calculate_unit_power(struct Building *b);
+float sum_apartment_kw(struct Building *b);
 float get_diversity_factor(int units);
 float total_field_KW(float totalKW);
 float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor);
 
 
-int main(void) {
-    /*
-* ------------------------------------------------------------
-* MAIN VARIABLES
-* ------------------------------------------------------------
-* These variables store all data entered by the user, such as
-* apartment count, number of flats, KW values, and machine data.
-*/
-    int   aptCount = 0;                         // Total number of apartments
-    int   flatCount[MAX_APT] = {0};             // Number of flats inside each apartment
-    float kw[MAX_APT][MAX_FLAT] = {{0}};        // KW usage for each flat  
-    float cosphi[MAX_APT] = {0};                // Power factor per apartment
-    
-    int machineCount = 0;                       // Number of machines in total
-    float machineKW[MAX_MACH] = {0.0f};         // KW values for machines
-    int aptWithMachineCount = 0;                // How many apartments have at least one machine
-    int aptMachineIndex[MAX_MACH] = {0};        // The apartment indexes that contain machines
 
+/* Data structures */
+struct Machine {
+    float simultaneity;
+    float efficiency;
+    float cosphi;
+    float kw;
+};
+
+struct Unit {
+    float kw;
+};
+
+struct Apartment {
+    int flatCount;
+    float cosphi;
+    int machineIndex;           /* optional index if using building-level pool (unused here) */
+    struct Unit units[MAX_FLAT];
+    struct Machine machine;     /* single machine per apartment in this design */
+    int hasMachine;             /* 0 or 1 */
+};
+
+struct Building {
+    int aptCount;
+    struct Apartment apts[MAX_APT];
+    int machineCount;                 /* number of apartments that have machines */
+    int aptMachineIndex[MAX_MACH];    /* 1-based apartment indices that contain machines */
+};
+
+
+
+int main(void) {
+   
+    struct Building building = {0};
+
+    
      /* --- Step 1: General user input for apartments and flats --- */
-    input_data(&aptCount, flatCount, kw, cosphi);
+    input_data(&building);
 
      /* --- Step 2: Input additional machines (e.g., elevators) --- */
-    input_extra_machines(aptCount, &machineCount, machineKW, &aptWithMachineCount, aptMachineIndex);
+    input_extra_machines(&building);
 
     /* --- Step 3: Compute the unit power for each flat based on KW usage --- */
-    calculate_unit_power(&aptCount, flatCount, kw);
+    calculate_unit_power(&building);
 
     // Step 4: Sum KW per apartment
-    float buildingTotal =sum_apartment_kw(aptCount, flatCount, kw, cosphi);
+    float buildingTotal =sum_apartment_kw(&building);
 
     printf("\n=== Field Total Diversified KW (including accumulator) : %.2f kW ===\n", buildingTotal);
 
@@ -79,7 +98,7 @@ float compute_unit_power(float kw) {
 * - cos phi (power factor) per apartment
 * The function also includes error-checking to prevent invalid input.
 */
-void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]){ 
+void input_data(struct Building *b){ 
 
     int apt;
     printf("Enter number of apartments: ");
@@ -88,24 +107,26 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
         exit(1);
     }
 
-     *aptCount = apt;
+     b->aptCount = apt;
 
     
     // Input number of flats per apartment
-    for (int i = 0; i < *aptCount; i++) {
+    for (int i = 0; i < b->aptCount; i++) {
         printf("Enter number of units for apartment %d: ", i + 1);
-        if(scanf("%d", &flatCount[i])!= 1 || flatCount[i] <= 0 || flatCount[i] >  MAX_FLAT) {
+        if(scanf("%d", &b->apts[i].flatCount)!= 1 || b->apts[i].flatCount <= 0 || b->apts[i].flatCount >  MAX_FLAT) {
             printf("Invalid flats number for apartment %d (1-%d).\n", i + 1, MAX_FLAT);
             exit(1);
         }
+        /* initialize hasMachine flag */
+        b->apts[i].hasMachine = 0;
     }
 
     // Input KW usage for each flat
-    for (int i = 0; i < *aptCount; i++) {
+    for (int i = 0; i < b->aptCount; i++) {
         printf("\nApartment %d:\n", i + 1);
-        for (int j = 0; j < flatCount[i]; j++) {
+        for (int j = 0; j < b->apts[i].flatCount; j++) {
             printf("Enter KW for apartment %d, unit %d: ", i + 1, j + 1);
-            if(scanf("%f", &kw[i][j]) != 1 || kw[i][j] < 0.0f) {
+            if(scanf("%f", &b->apts[i].units[j].kw) != 1 || b->apts[i].units[j].kw < 0.0f) {
                 printf("Invalid KW value. Must be non-negative.\n");
                 exit(1);
             }
@@ -114,11 +135,11 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
 
     // Input: power factor (cos φ) per apartment
     printf("\n--- Power Factor Input ---\n");
-    for (int i = 0; i < *aptCount; i++) {
+    for (int i = 0; i < b->aptCount; i++) {
         printf("Enter cos φ for apartment %d: ", i + 1);
-        if(scanf("%f", &cosphi[i])!= 1 || cosphi[i] <= 0.0f || cosphi[i] > 1.0f) {
+        if(scanf("%f", &b->apts[i].cosphi)!= 1 || b->apts[i].cosphi <= 0.0f || b->apts[i].cosphi > 1.0f) {
             printf("Invalid cos φ for apartment %d. Using default 1.0.\n", i + 1);
-            cosphi[i] = 1.0f;
+            b->apts[i].cosphi = 1.0f;
         }
     }
 }
@@ -134,68 +155,74 @@ void input_data(int *aptCount, int flatCount[], float kw[][MAX_FLAT], float cosp
 * - Which apartments they are
 * - KW and cos phi values of each machine
 */
-void input_extra_machines(int aptCount, int *machineCount, float machineKW[], int *aptWithMachineCount, int aptMachineIndex[]) {
+void input_extra_machines(struct Building *b) {
 
     printf("\nEnter number of apartments that have extra machines (like Elevator): ");
-    if(scanf("%d", aptWithMachineCount) != 1 || *aptWithMachineCount < 0 || *aptWithMachineCount > aptCount) {
+    int count;
+    if(scanf("%d", &count) != 1 || count < 0 ||  count > b->aptCount) {
         printf("Invalid number of apartments with machines.\n");
         exit(1);
     }
 
     /* If there are no machine-equipped apartments, nothing more to do */
-    if(*aptWithMachineCount == 0) {
-        *machineCount = 0;
+    if( count == 0) {
+        b->machineCount = 0;
         return;
     }
 
+    b->machineCount = count;
+
     printf("Enter the apartment numbers that have machines (space separated): ");
-    for(int i = 0; i < *aptWithMachineCount; i++) {
-        if(scanf("%d", &aptMachineIndex[i]) != 1 || aptMachineIndex[i] <= 0 || aptMachineIndex[i] > aptCount) {
+    for(int i = 0; i < count; i++) {
+        if(scanf("%d", &b->aptMachineIndex[i]) != 1 || b->aptMachineIndex[i] <= 0 || b->aptMachineIndex[i] > b->aptCount) {
             printf("Invalid apartment number.\n");
             exit(1);
         }
     }
 
     /* Input KW and parameters values for each machine */
-    for(int i = 0; i < *aptWithMachineCount; i++) {
-        int aptNum = aptMachineIndex[i];         /* aptNum is 1-based apartment number */
-
+    for(int i = 0; i < count; i++) {
+        int aptNum = b->aptMachineIndex[i];         /* aptNum is 1-based apartment number */
+        int idx = aptNum - 1;
         printf("Enter Kw for machine in apartment %d: ", aptNum);
-        if(scanf("%f", &machineKW[i]) != 1 || machineKW[i] < 0.0f) {
+        if(scanf("%f", &b->apts[idx].machine.kw) != 1 || b->apts[idx].machine.kw < 0.0f) {
             printf("Invalid KW for machine in apartment %d.\n", aptNum);    
             exit(1);
         }
 
 
-        float cosphiMachine = 1.0f;
+        b->apts[idx].machine.cosphi = 1.0f;
         printf("Enter cos phi for machine inside ap %d: ", aptNum);
-        if(scanf("%f", &cosphiMachine) != 1 || cosphiMachine <= 0.0f || cosphiMachine > 1.0f) {
+        if(scanf("%f", &b->apts[idx].machine.cosphi) != 1 || b->apts[idx].machine.cosphi <= 0.0f || b->apts[idx].machine.cosphi > 1.0f) {
             printf("Invalid cos phi for machine in apartment %d. Using default 1.0.\n", aptNum);
-            cosphiMachine = 1.0f;
+            b->apts[idx].machine.cosphi = 1.0f;
         }
         // Optional: store cosphiMachine if needed later
 
 
-        float SimultaneityFactor = 1.0f;
+        b->apts[idx].machine.simultaneity = 1.0f;
         printf("Enter Simultaneity Factor for machine inside ap %d: ", aptNum);
-        if(scanf("%f", &SimultaneityFactor) != 1 || SimultaneityFactor <= 0.0f || SimultaneityFactor > 1.0f) {
+        if(scanf("%f", &b->apts[idx].machine.simultaneity) != 1 || b->apts[idx].machine.simultaneity <= 0.0f || b->apts[idx].machine.simultaneity > 1.0f) {
             printf("Invalid Simultaneity Factor for machine in apartment %d. Using default 1.0.\n", aptNum);
-            SimultaneityFactor = 1.0f;
+            b->apts[idx].machine.simultaneity = 1.0f;
         }
 
-        float effiecencyFactor = 1.0f;
+        b->apts[idx].machine.efficiency = 1.0f;
         printf("Enter effiecency Factor for machine inside ap %d: ", aptNum);
-        if(scanf("%f", &effiecencyFactor) != 1 || effiecencyFactor <= 0.0f || effiecencyFactor > 1.0f) {
+        if(scanf("%f", &b->apts[idx].machine.efficiency) != 1 || b->apts[idx].machine.efficiency <= 0.0f || b->apts[idx].machine.efficiency > 1.0f) {
             printf("Invalid effiecency Factor for machine in apartment %d. Using default 1.0.\n", aptNum);
-            effiecencyFactor = 1.0f;
+            b->apts[idx].machine.efficiency = 1.0f;
         }
 
-        float machinespower = calculate_machines_power(machineKW[i], SimultaneityFactor, cosphiMachine, effiecencyFactor);
+        float machinespower = calculate_machines_power(b->apts[idx].machine.kw,
+            b->apts[idx].machine.simultaneity,
+            b->apts[idx].machine.cosphi,
+            b->apts[idx].machine.efficiency);
 
+        b->apts[idx].hasMachine = 1;
         printf("Apartment %d machine → Diversified Power: %.2f kW\n", aptNum, machinespower);
     }
 
-    *machineCount = *aptWithMachineCount;
 }
 
 
@@ -209,14 +236,14 @@ void input_extra_machines(int aptCount, int *machineCount, float machineKW[], in
 * - Anything above 8 kW → multiply by 0.4
 * Then the function prints all calculated values.
 */
-void calculate_unit_power(int *aptCount, int flatCount[], float kw[][MAX_FLAT])
+void calculate_unit_power(struct Building *b)
 {
     printf("\n===== Unit KW Summary =====\n\n");
 
-    for(int i = 0; i < *aptCount; i++){
-        for(int j = 0; j < flatCount[i]; j++)
+    for(int i = 0; i < b->aptCount; i++){
+        for(int j = 0; j < b->apts[i].flatCount; j++)
         {
-            float unitPower = compute_unit_power(kw[i][j]);
+            float unitPower = compute_unit_power(b->apts[i].units[j].kw);
             printf("Apartment %d, unit %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
         }
     }
@@ -254,13 +281,13 @@ float total_field_KW(float totalKW)
 
 
 // Sum KW per apartment using compute_unit_power
-float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], float cosphi[]) {
+float sum_apartment_kw(struct Building *b) {
     printf("\n===== Apartment KW Summary =====\n");
     float buildingTotal = 0.0f;
 
-    for(int i = 0; i < aptCount; i++) {
+    for(int i = 0; i < b->aptCount; i++) {
 
-    float factor = get_diversity_factor(flatCount[i]);
+    float factor = get_diversity_factor(b->apts[i].flatCount);
 
         if (factor == 0.0f) {
             printf("Apartment %d → Invalid number of units.\n", i + 1);
@@ -269,17 +296,17 @@ float sum_apartment_kw(int aptCount, int flatCount[], float kw[][MAX_FLAT], floa
 
 
         float totalKW = 0.0f;
-        for(int j = 0; j < flatCount[i]; j++) {
-            totalKW += compute_unit_power(kw[i][j]);
+        for(int j = 0; j < b->apts[i].flatCount; j++) {
+            totalKW += compute_unit_power(b->apts[i].units[j].kw);
         }
         
-       if (cosphi[i] <= 0.0f || cosphi[i] > 1.0f) {
+       if (b->apts[i].cosphi <= 0.0f || (b->apts[i].cosphi > 1.0f)){
             printf("Warning: cosφ for apartment %d is zero or invalid. Using 1.0 instead to avoid division by zero.\n", i + 1);
-            cosphi[i] = 1.0f;
+            b->apts[i].cosphi = 1.0f;
         }
 
 
-        totalKW = (totalKW / cosphi[i]) * factor;
+        totalKW = totalKW / (b->apts[i].cosphi) * factor;
         printf("Apartment %d → Diversified Power: %.2f kW\n", i+1, totalKW);
 
         total_field_KW(totalKW);    /* accumulate (stored inside static) */

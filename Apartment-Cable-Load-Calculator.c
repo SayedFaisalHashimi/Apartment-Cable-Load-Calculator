@@ -20,7 +20,7 @@ void input_extra_machines(struct Building *b);
 void calculate_unit_power(struct Building *b);
 float sum_apartment_kw(struct Building *b);
 float get_diversity_factor(int units);
-float total_field_KW(float totalKW);
+float total_field_KW(float totalKWfield); 
 float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor);
 
 
@@ -51,6 +51,7 @@ struct Building {
     struct Apartment apts[MAX_APT];
     int machineCount;                 /* number of apartments that have machines */
     int aptMachineIndex[MAX_MACH];    /* 1-based apartment indices that contain machines */
+    int totalfieldnumberflat; 
 };
 
 
@@ -101,6 +102,7 @@ float compute_unit_power(float kw) {
 void input_data(struct Building *b){ 
 
     int apt;
+    b->totalfieldnumberflat=0;
     printf("Enter number of apartments: ");
     if(scanf("%d", &apt)!= 1 || apt <= 0 || apt > MAX_APT ) {
         printf("Invalid number of apartments (1-%d).\n", MAX_APT);
@@ -117,9 +119,14 @@ void input_data(struct Building *b){
             printf("Invalid flats number for apartment %d (1-%d).\n", i + 1, MAX_FLAT);
             exit(1);
         }
+
+        b->totalfieldnumberflat+=b->apts[i].flatCount;
         /* initialize hasMachine flag */
         b->apts[i].hasMachine = 0;
     }
+
+    printf("\nTotal units across all apartments: %d\n", b->totalfieldnumberflat);
+
 
     // Input KW usage for each flat
     for (int i = 0; i < b->aptCount; i++) {
@@ -239,6 +246,7 @@ void input_extra_machines(struct Building *b) {
 void calculate_unit_power(struct Building *b)
 {
     printf("\n===== Unit KW Summary =====\n\n");
+    printf("\t\t\t\tUnitPower =  (0.6 * 8 + 0.4 * (kw - 8))\n\n");
 
     for(int i = 0; i < b->aptCount; i++){
         for(int j = 0; j < b->apts[i].flatCount; j++)
@@ -272,10 +280,10 @@ float get_diversity_factor(int units)
 }
 
 /* Accumulator for total field KW */
-float total_field_KW(float totalKW)
+float total_field_KW(float totalKWfield)//......................................
 {
     static float sumfieldKW = 0.0f;
-    sumfieldKW += totalKW;
+    sumfieldKW += totalKWfield;//...........................................................
     return sumfieldKW;
 }
 
@@ -283,7 +291,10 @@ float total_field_KW(float totalKW)
 // Sum KW per apartment using compute_unit_power
 float sum_apartment_kw(struct Building *b) {
     printf("\n===== Apartment KW Summary =====\n");
+    printf("\n\t\t\t\t\t\tApartment DP= unitpower * factor / cosφ \n\n");
+
     float buildingTotal = 0.0f;
+    float totalKWfield = 0;    /* sum of unit powers before apartment factor/cosphi */
 
     for(int i = 0; i < b->aptCount; i++) {
 
@@ -305,16 +316,21 @@ float sum_apartment_kw(struct Building *b) {
             b->apts[i].cosphi = 1.0f;
         }
 
+        totalKWfield +=totalKW ;  // Now I have apartment total without factor and cosphi
 
         totalKW = totalKW / (b->apts[i].cosphi) * factor;
         printf("Apartment %d → Diversified Power: %.2f kW\n", i+1, totalKW);
 
-        total_field_KW(totalKW);    /* accumulate (stored inside static) */
-        buildingTotal += totalKW;
+
+       /* accumulate (stored inside static) */
     }
 
     printf("===============================\n");
-    return buildingTotal;
+
+    float factor1 = get_diversity_factor(b->totalfieldnumberflat);
+    printf("factor for all the site = %f\n", factor1);
+
+    return totalKWfield*factor1;
 }
 
 float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor) {

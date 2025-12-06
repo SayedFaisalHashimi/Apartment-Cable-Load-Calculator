@@ -351,7 +351,15 @@ float sum_apartment_kw(struct Building *b) {
          b->apts[i].cableTraysFactor = get_cabletrays_factor(b->apts[i].flatCount); 
          
         // Display the cable tray factor for this apartment
-    printf("Cable tray factor for Apartment %d: %.2f\n\n", i + 1, b->apts[i].cableTraysFactor);
+    printf("Cable tray factor for Apartment %d: %.2f\n", i + 1, b->apts[i].cableTraysFactor);
+
+    float currentApartment = ( totalKW* 1000.0f) / (sqrtf(3.0f) * VOLTAGE); //Apartment
+         printf("Current Apartment %d : %.2f A\n", i+1, currentApartment);
+
+          /* pass current (A) to Cable_size which should map amps -> mm^2 */
+         float cable_mm2 = Cable_size(currentApartment);
+         printf("Cable size for apartment %d unit %d : %.2f mm^2\n\n\n", i+1, cable_mm2);
+
 
 
        /* accumulate (stored inside static) */

@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>  
 
 #define MAX_APT 1000
 #define MAX_FLAT 100
 #define MAX_MACH 50
+#define VOLTAGE 400.0f  //define as float
+
 
 
 /*
@@ -22,6 +25,7 @@ float sum_apartment_kw(struct Building *b);
 float get_diversity_factor(int units);
 float total_field_KW(float totalKWfield); 
 float get_cabletrays_factor(int units); 
+float Cable_size( float current_amps);
 float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor);
 
 
@@ -264,9 +268,16 @@ void calculate_unit_power(struct Building *b)
         {
             float unitPower = compute_unit_power(b->apts[i].units[j].kw);
         printf("Apartment %d, unit %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
-            float kwAfterTray = unitPower / b->apts[i].cableTraysFactor;
-         printf("KW After Applying Tray Factor for Apartment %d unit %d : %.2f Kw\n\n",i+1,j+1 ,kwAfterTray);
 
+            float kwAfterTray = unitPower / b->apts[i].cableTraysFactor;
+         printf("Tray Factor KW for Apartment %d unit %d : %.2f KVA\n",i+1,j+1 ,kwAfterTray);           
+
+         float currentA = ( kwAfterTray* 1000.0f) / (sqrtf(3.0f) * VOLTAGE); //A
+         printf("Current Apartment %d unit %d : %.2f A\n", i+1, j+1, currentA);
+
+          /* pass current (A) to Cable_size which should map amps -> mm^2 */
+         float cable_mm2 = Cable_size(currentA);
+         printf("Cable size for apartment %d unit %d : %.2f mm^2\n\n\n", i+1, j+1, cable_mm2);
         }
     }
 
@@ -413,4 +424,25 @@ float get_cabletrays_factor(int units)
 
     // > 54 units: more than 6 trays — use an averaged factor or a conservative one
     return 0.75f;
+}
+
+
+/*Returning cable sizes*/
+float Cable_size(float current_amps) 
+{
+    if (current_amps <= 30) return 1.5f;
+    if (current_amps <= 39) return 2.5f;
+    if (current_amps <= 50) return 4.0f;
+    if (current_amps <= 62) return 6.0f;
+    if (current_amps <= 83) return 10.0f;
+    if (current_amps <= 107) return 16.0f;
+    if (current_amps <= 138) return 25.0f;
+    if (current_amps <= 164) return 35.0f;
+    if (current_amps <= 195) return 50.0f;
+    if (current_amps <= 238) return 70.0f;
+    if (current_amps <= 286) return 95.0f;
+    if (current_amps <= 325) return 120.0f;
+    if (current_amps <= 365) return 150.0f;
+    if (current_amps <= 413) return 185.0f;
+    return 240.0f; /* 62+ */
 }

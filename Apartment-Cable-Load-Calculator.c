@@ -21,6 +21,7 @@ void calculate_unit_power(struct Building *b);
 float sum_apartment_kw(struct Building *b);
 float get_diversity_factor(int units);
 float total_field_KW(float totalKWfield); 
+float get_cabletrays_factor(int units); 
 float calculate_machines_power(float machineKW, float SimultaneityFactor, float cosphiMachine, float effiecencyFactor);
 
 
@@ -44,6 +45,13 @@ struct Apartment {
     struct Unit units[MAX_FLAT];
     struct Machine machine;     /* single machine per apartment in this design */
     int hasMachine;             /* 0 or 1 */
+
+    /* Derating factor applied when multiple cables run together in trays.
+    Electromagnetic heating and mutual coupling reduce the effective current-carrying
+    capacity of the cables, which lowers usable kW and increases the required apparent power (S). */
+    float cableTraysFactor;     
+    
+
 };
 
 struct Building {
@@ -322,6 +330,13 @@ float sum_apartment_kw(struct Building *b) {
         printf("Apartment %d → Diversified Power: %.2f kW\n", i+1, totalKW);
 
 
+        // Calculate the cable tray derating factor based on the apartment's flat count
+         b->apts[i].cableTraysFactor = get_cabletrays_factor(b->apts[i].flatCount); 
+         
+        // Display the cable tray factor for this apartment
+    printf("Cable tray factor for Apartment %d: %.2f\n\n", i + 1, b->apts[i].cableTraysFactor);
+
+
        /* accumulate (stored inside static) */
     }
 
@@ -340,4 +355,56 @@ float calculate_machines_power(float machineKW, float SimultaneityFactor, float 
     if(effiecencyFactor <= 0.0f) effiecencyFactor = 1.0f;
 
     return (machineKW / cosphiMachine) * SimultaneityFactor / effiecencyFactor;
+}
+
+
+
+/* Return cable trays derating factor based on number of units (flats) */
+float get_cabletrays_factor(int units)
+{
+    if (units <= 0) return 1.0f; // no derating for invalid/zero units
+
+    // 1 tray: up to 9 units
+    if (units <= 9) {
+        // mapping taken from your original table
+        if (units == 1)  return 0.97f;
+        if (units == 2)  return 0.84f;
+        if (units == 3)  return 0.78f;
+        if (units == 4)  return 0.75f;
+        if (units <= 6)  return 0.71f; // 5-6
+        return 0.68f; // 7-9
+    }
+
+    // 2 trays: 10 - 18 units
+    if (units <= 18) {
+        if (units == 10) return 0.97f;
+        if (units == 11) return 0.83f;
+        if (units == 12) return 0.76f;
+        if (units == 13) return 0.72f;
+        if (units <= 15) return 0.68f; // 14-15
+        return 0.63f; // 16-18
+    }
+
+    // 3 trays: 19 - 27 units
+    if (units <= 27) {
+        if (units == 19) return 0.97f;
+        if (units == 20) return 0.82f;
+        if (units == 21) return 0.75f;
+        if (units == 22) return 0.71f;
+        if (units <= 24) return 0.66f; // 23-24
+        return 0.61f; // 25-27
+    }
+
+    // 4-6 trays: 28 - 54 units
+    if (units <= 54) {
+        if (units <= 30) return 0.97f; // 28-30
+        if (units <= 33) return 0.81f; // 31-33
+        if (units <= 36) return 0.73f; // 34-36
+        if (units <= 39) return 0.60f; // 37-39
+        if (units <= 45) return 0.63f; // 40-45
+        return 0.58f; // 46-54
+    }
+
+    // > 54 units: more than 6 trays — use an averaged factor or a conservative one
+    return 0.75f;
 }

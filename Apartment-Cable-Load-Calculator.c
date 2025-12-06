@@ -257,10 +257,16 @@ void calculate_unit_power(struct Building *b)
     printf("\t\t\t\tUnitPower =  (0.6 * 8 + 0.4 * (kw - 8))\n\n");
 
     for(int i = 0; i < b->aptCount; i++){
+
+        b->apts[i].cableTraysFactor = get_cabletrays_factor(b->apts[i].flatCount);
+
         for(int j = 0; j < b->apts[i].flatCount; j++)
         {
             float unitPower = compute_unit_power(b->apts[i].units[j].kw);
-            printf("Apartment %d, unit %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
+        printf("Apartment %d, unit %d → Diversified Power: %.2f kW\n", i+1, j+1, unitPower);
+            float kwAfterTray = unitPower / b->apts[i].cableTraysFactor;
+         printf("KW After Applying Tray Factor for Apartment %d unit %d : %.2f Kw\n\n",i+1,j+1 ,kwAfterTray);
+
         }
     }
 
